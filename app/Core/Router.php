@@ -27,18 +27,48 @@ class Router
         // Normaliza a URI: garante que a raiz seja '/' e remove barras finais
         $uri = ($uri === '' || $uri === '/') ? '/' : rtrim($uri, '/');
 
-        // Verifica se a rota existe
-        if (isset($this->routes[$method][$uri])) {
-            $route = $this->routes[$method][$uri];
-            $controllerName = 'App\\Controllers\\' . $route['controller'];
-            $methodName = $route['method'];
+        // Procura a rota correspondente
+        foreach ($this->routes[$method] ?? [] as $routePattern => $route) {
+            // Converte o padrão da rota em expressão regular e extrai nomes dos parâmetros
+            $paramNames = [];
+            $pattern = preg_replace_callback(
+                '#\{([a-zA-Z0-9_]+)\}#',
+                function ($matches) use (&$paramNames) {
+                    $paramNames[] = $matches[1];
+                    return '([a-zA-Z0-9_]+)';
+                },
+                $routePattern
+            );
+            $pattern = '#^' . $pattern . '$#';
 
-            // Verifica se o controlador existe
-            if (class_exists($controllerName)) {
-                $controller = new $controllerName();
-                if (method_exists($controller, $methodName)) {
-                    $controller->$methodName();
-                    return;
+            // Verifica se a URI corresponde ao padrão
+            if (preg_match($pattern, $uri, $matches)) {
+                $controllerName = 'App\\Controllers\\' . $route['controller'];
+                $methodName = $route['method'];
+
+                // Remove o primeiro elemento (a correspondência completa)
+                array_shift($matches);
+
+                // Cria array associativo de parâmetros
+                $params = [];
+                foreach ($paramNames as $index => $name) {
+                    if (isset($matches[$index])) {
+                        $params[$name] = $matches[$index];
+                    }
+                }
+
+                // Verifica se o controlador existe
+                if (class_exists($controllerName)) {
+                    $controller = new $controllerName();
+                    if (method_exists($controller, $methodName)) {
+                        // Chama o método com parâmetros apenas se houver parâmetros
+                        if (empty($params)) {
+                            $controller->$methodName();
+                        } else {
+                            $controller->$methodName($params);
+                        }
+                        return;
+                    }
                 }
             }
         }
