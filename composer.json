@@ -1,0 +1,14 @@
+{
+    "name": "sistema-tc/sistema-tc",
+    "description": "Sistema de gestão web para Fábrica de Campeões",
+    "require": {
+        "php": "^8.4",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "App\\Core\\": "app/Core/"
+        }
+    }
+}
