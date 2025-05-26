@@ -116,4 +116,36 @@ class UserController
         header('Location: /');
         exit;
     }
+
+    public function delete($params)
+    {
+        if (!isset($params['id'])) {
+            http_response_code(400);
+            View::render('errors/400', 'layouts/main', ['message' => 'Parâmetro ID não fornecido']);
+            return;
+        }
+
+        $user = User::find($params['id']);
+        if (!$user) {
+            http_response_code(404);
+            View::render('errors/404', 'layouts/main');
+            return;
+        }
+
+        if ($user->delete()) {
+            $users = User::all();
+            View::render('users/index', 'layouts/main', [
+                'title' => 'Usuários',
+                'users' => $users,
+                'success' => 'Usuário excluído com sucesso.'
+            ]);
+        } else {
+            $users = User::all();
+            View::render('users/index', 'layouts/main', [
+                'title' => 'Usuários',
+                'users' => $users,
+                'error' => 'Erro ao excluir o usuário.'
+            ]);
+        }
+    }
 }
