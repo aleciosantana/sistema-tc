@@ -9,7 +9,7 @@ class UserController
     public function index()
     {
         $users = User::all();
-        View::render('users/index', 'layouts/main', ['users' => $users]);
+        View::render('users/index', 'layouts/main', ['title' => 'Usuários', 'users' => $users]);
     }
 
     public function create()
@@ -33,11 +33,12 @@ class UserController
                 }
             }
             View::render('users/create', 'layouts/main', [
+                'title' => 'Criar Usuário',
                 'errors' => $errors,
                 'user' => $user
             ]);
         } else {
-            View::render('users/create', 'layouts/main', ['user' => $user]);
+            View::render('users/create', 'layouts/main', ['title' => 'Criar Usuário', 'user' => $user]);
         }
     }
 
@@ -74,11 +75,13 @@ class UserController
                 }
             }
             View::render('users/edit', 'layouts/main', [
+                'title' => 'Editar Usuário',
                 'user' => $user,
                 'errors' => $errors
             ]);
         } else {
             View::render('users/edit', 'layouts/main', [
+                'title' => 'Editar Usuário',
                 'user' => $user
             ]);
         }
@@ -92,17 +95,25 @@ class UserController
             $user = User::authenticate($email, $password);
 
             if ($user) {
-                session_start();
                 $_SESSION['user_id'] = $user->id;
                 header('Location: /');
                 exit;
             } else {
                 View::render('users/login', 'layouts/main', [
+                    'title' => 'Login',
                     'error' => 'E-mail ou senha inválidos.'
                 ]);
             }
         } else {
-            View::render('users/login', 'layouts/main');
+            View::render('users/login', 'layouts/main', ['title' => 'Login']);
         }
+    }
+
+    public function logout()
+    {
+        session_unset();
+        session_destroy();
+        header('Location: /');
+        exit;
     }
 }

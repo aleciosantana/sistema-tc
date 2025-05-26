@@ -1,80 +1,115 @@
 <?php
 namespace App\Core;
 
-use App\Config\Routes;
-
 class Router
 {
-    private $routes;
+    protected $routes = [];
+    protected $middlewares = [];
 
-    public function __construct()
+    public function addMiddleware($middleware, $routes = [], $excludedRoutes = [])
     {
-        $this->routes = Routes::getRoutes();
+        $this->middlewares[] = [
+            'middleware' => $middleware,
+            'routes' => $routes,
+            'excludedRoutes' => $excludedRoutes
+        ];
+    }
+
+    public function get($path, $handler)
+    {
+        $this->addRoute('GET', $path, $handler);
+    }
+
+    public function post($path, $handler)
+    {
+        $this->addRoute('POST', $path, $handler);
+    }
+
+    protected function addRoute($method, $path, $handler)
+    {
+        $this->routes[] = [
+            'method' => $method,
+            'path' => $path,
+            'handler' => $handler
+        ];
     }
 
     public function dispatch()
     {
-        // Obtém o método HTTP e a URI
-        $method = $_SERVER['REQUEST_METHOD'];
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $requestMethod = $_SERVER['REQUEST_METHOD'];
+        $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        // Remove a pasta base, se necessário (ex.: /sistema-tc/)
-        $basePath = '/';
-        if ($basePath !== '/' && strpos($uri, $basePath) === 0) {
-            $uri = substr($uri, strlen($basePath));
-        }
+        foreach ($this->middlewares as $middlewareConfig) {
+            $middleware = $middlewareConfig['middleware'];
+            $routes = $middlewareConfig['routes'];
+            $excludedRoutes = $middlewareConfig['excludedRoutes'];
 
-        // Normaliza a URI: garante que a raiz seja '/' e remove barras finais
-        $uri = ($uri === '' || $uri === '/') ? '/' : rtrim($uri, '/');
-
-        // Procura a rota correspondente
-        foreach ($this->routes[$method] ?? [] as $routePattern => $route) {
-            // Converte o padrão da rota em expressão regular e extrai nomes dos parâmetros
-            $paramNames = [];
-            $pattern = preg_replace_callback(
-                '#\{([a-zA-Z0-9_]+)\}#',
-                function ($matches) use (&$paramNames) {
-                    $paramNames[] = $matches[1];
-                    return '([a-zA-Z0-9_]+)';
-                },
-                $routePattern
-            );
-            $pattern = '#^' . $pattern . '$#';
-
-            // Verifica se a URI corresponde ao padrão
-            if (preg_match($pattern, $uri, $matches)) {
-                $controllerName = 'App\\Controllers\\' . $route['controller'];
-                $methodName = $route['method'];
-
-                // Remove o primeiro elemento (a correspondência completa)
-                array_shift($matches);
-
-                // Cria array associativo de parâmetros
-                $params = [];
-                foreach ($paramNames as $index => $name) {
-                    if (isset($matches[$index])) {
-                        $params[$name] = $matches[$index];
+            $applyMiddleware = false;
+            if (empty($routes)) {
+                $applyMiddleware = true;
+            } else {
+                foreach ($routes as $route) {
+                    if ($this->matchRoute($route, $requestUri)) {
+                        $applyMiddleware = true;
+                        break;
                     }
                 }
+            }
 
-                // Verifica se o controlador existe
-                if (class_exists($controllerName)) {
-                    $controller = new $controllerName();
-                    if (method_exists($controller, $methodName)) {
-                        // Chama o método com parâmetros apenas se houver parâmetros
-                        if (empty($params)) {
-                            $controller->$methodName();
-                        } else {
-                            $controller->$methodName($params);
-                        }
-                        return;
-                    }
+            if ($applyMiddleware && !in_array($requestUri, $excludedRoutes)) {
+                if (!$middleware->handle()) {
+                    return;
                 }
             }
         }
 
-        // Rota não encontrada - Exibir 404
+        foreach ($this->routes as $route) {
+            if ($route['method'] === $requestMethod && $this->matchRoute($route['path'], $requestUri)) {
+                $this->handleRoute($route['handler'], $this->extractParams($route['path'], $requestUri));
+                return;
+            }
+        }
+
         http_response_code(404);
         View::render('errors/404', 'layouts/main');
+    }
+
+    protected function matchRoute($routePath, $requestUri)
+    {
+        $routePath = preg_replace('/{[^}]+}/', '([^/]+)', $routePath);
+        $routePath = str_replace('/', '\/', $routePath);
+        if (preg_match("/^$routePath$/", $requestUri, $matches)) {
+            return true;
+        }
+        return $routePath === $requestUri;
+    }
+
+    protected function extractParams($routePath, $requestUri)
+    {
+        $params = [];
+        $routeParts = explode('/', trim($routePath, '/'));
+        $uriParts = explode('/', trim($requestUri, '/'));
+
+        foreach ($routeParts as $index => $part) {
+            if (preg_match('/^{[^}]+}$/', $part) && isset($uriParts[$index])) {
+                $paramName = trim($part, '{}');
+                $params[$paramName] = $uriParts[$index];
+            }
+        }
+
+        return $params;
+    }
+
+    protected function handleRoute($handler, $params)
+    {
+        if (is_callable($handler)) {
+            call_user_func($handler, $params);
+        } elseif (is_array($handler) && count($handler) === 2) {
+            $controller = new $handler[0]();
+            $method = $handler[1];
+            call_user_func([$controller, $method], $params);
+        } else {
+            throw new \Exception("Handler inválido");
+        }
     }
 }
