@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// session_name('sessao_admin');
-// session_start();
+use App\Core\Router;
+use App\Controllers\DashboardController;
+use App\Controllers\AdminController;
 
-echo "Admin area is under construction.";
-// ...restante do código...
+session_name('sessao_admin');
+session_start();
+
+$router = new Router();
+
+$router->get('/', [DashboardController::class, 'index']);
+$router->get('/users', [AdminController::class, 'index']);
+
+$router->dispatch();
