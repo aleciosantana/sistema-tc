@@ -6,6 +6,7 @@ use App\Core\Router;
 use App\Controllers\UserController;
 use App\Core\AuthMiddleware;
 
+session_name('sessao_cliente');
 session_start();
 
 $router = new Router();
