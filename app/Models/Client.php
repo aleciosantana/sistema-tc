@@ -11,4 +11,12 @@ class Client extends Model implements Authenticatable
     use AuthenticatableTrait;
 
     protected static $table = 'clients';
+
+    protected static $relationships = [
+        'orders' => [
+            'type' => self::HAS_MANY,
+            'model' => Order::class,
+            'foreignKey' => 'client_id',
+        ],
+    ];
 }

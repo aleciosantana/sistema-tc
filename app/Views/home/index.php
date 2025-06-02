@@ -61,7 +61,7 @@
                                 <h5 class="card-title"><?= $product->name ?></h5>
                                 <p class="card-text"><?= $product->description ?></p>
                                 <p class="card-text"><strong>R$ <?= number_format($product->price, 2, ',', '.') ?></strong></p>
-                                <a href="/products/view/<?php echo $product->id; ?>" class="btn btn-primary">Ver Detalhes</a>
+                                <a href="/product/<?php echo $product->id; ?>" class="btn btn-primary">Ver Detalhes</a>
                             </div>
                         </div>
                     </div>
