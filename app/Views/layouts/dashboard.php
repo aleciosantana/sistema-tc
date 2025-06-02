@@ -20,7 +20,7 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
-                        <?php if (isset($_SESSION['user_id'])): ?>
+                        <?php if (isset($_SESSION['auth_id'])): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="/users">Usuários</a>
                             </li>
@@ -30,7 +30,7 @@
                         <?php endif; ?>
                     </ul>
                     <ul class="navbar-nav">
-                        <?php if (isset($_SESSION['user_id'])): ?>
+                        <?php if (isset($_SESSION['auth_id'])): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="/logout">Sair</a>
                             </li>

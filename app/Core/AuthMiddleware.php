@@ -19,7 +19,7 @@ class AuthMiddleware
             return true;
         }
 
-        if (!isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['auth_id'])) {
             header('Location: /login');
             exit;
         }

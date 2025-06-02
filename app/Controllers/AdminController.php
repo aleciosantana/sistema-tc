@@ -100,7 +100,7 @@ class AdminController
             $user = User::authenticate($email, $password);
 
             if ($user) {
-                $_SESSION['user_id'] = $user->id;
+                $_SESSION['auth_id'] = $user->id;
                 header('Location: /');
                 exit;
             } else {

@@ -24,7 +24,7 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav">
-                        <?php if (isset($_SESSION['user_id'])): ?>
+                        <?php if (isset($_SESSION['auth_id'])): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="/logout">Sair</a>
                             </li>

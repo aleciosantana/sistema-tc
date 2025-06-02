@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Controllers\HomeController;
+use App\Controllers\AuthController;
 use App\Core\Router;
-use App\Controllers\UserController;
 use App\Core\AuthMiddleware;
 
 session_name('sessao_cliente');
@@ -11,18 +11,14 @@ session_start();
 
 $router = new Router();
 
-$router->addMiddleware(new AuthMiddleware(), [], ['/login', '/logout', '/']);
+$router->addMiddleware(new AuthMiddleware(), [], ['/login', '/logout', '/register', '/']);
 
 $router->get('/', [HomeController::class, 'index']);
 
-$router->get('/users', [UserController::class, 'index']);
-$router->get('/users/create', [UserController::class, 'create']);
-$router->post('/users/create', [UserController::class, 'create']);
-$router->get('/users/edit/{id}', [UserController::class, 'edit']);
-$router->post('/users/edit/{id}', [UserController::class, 'edit']);
-$router->post('/users/delete/{id}', [UserController::class, 'delete']);
-$router->get('/login', [UserController::class, 'login']);
-$router->post('/login', [UserController::class, 'login']);
-$router->get('/logout', [UserController::class, 'logout']);
+$router->get('/login', [AuthController::class, 'showLoginForm']);
+$router->post('/login', [AuthController::class, 'login']);
+$router->get('/register', [AuthController::class, 'showRegisterForm']);
+$router->post('/register', [AuthController::class, 'register']);
+$router->get('/logout', [AuthController::class, 'logout']);
 
 $router->dispatch();
