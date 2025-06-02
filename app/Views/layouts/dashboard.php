@@ -24,6 +24,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/users">Usuários</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/products">Produtos</a>
+                            </li>
                         <?php endif; ?>
                     </ul>
                     <ul class="navbar-nav">
